@@ -39,33 +39,41 @@
 # (transcoding), templating and a way to reuse arguments that are frequently repeated. See more here:
 # https://kedro.readthedocs.io/en/stable/data/data_catalog.html
 
-companies:
+teams:
   type: pandas.CSVDataSet
-  filepath: data/01_raw/companies.csv
+  filepath: data/01_raw/team_data_2022.csv
 
-reviews:
-  type: pandas.CSVDataSet
-  filepath: data/01_raw/reviews.csv
 
-shuttles:
-  type: pandas.ExcelDataSet
-  filepath: data/01_raw/shuttles.xlsx
-  load_args:
-    engine: openpyxl # Use modern Excel engine, it is the default since Kedro 0.18.0
-
-preprocessed_companies:
+preprocessed_teams:
   type: pandas.ParquetDataSet
-  filepath: data/02_intermediate/preprocessed_companies.pq
-
-preprocessed_shuttles:
-  type: pandas.ParquetDataSet
-  filepath: data/02_intermediate/preprocessed_shuttles.pq
+  filepath: data/02_intermediate/preprocessed_teams.pq
 
 model_input_table:
   type: pandas.ParquetDataSet
   filepath: data/03_primary/model_input_table.pq
+  versioned: true
 
-regressor:
+X_train:
+  type: pandas.ParquetDataSet
+  filepath: data/05_model_input/X_train.pq
+  versioned: true
+
+X_test:
+  type: pandas.ParquetDataSet
+  filepath: data/05_model_input/X_test.pq
+  versioned: true
+
+y_train:
+  type: pandas.ParquetDataSet
+  filepath: data/05_model_input/y_train.pq
+  versioned: true
+
+y_test:
+  type: pandas.ParquetDataSet
+  filepath: data/05_model_input/y_test.pq
+  versioned: true
+
+classifier:
   type: pickle.PickleDataSet
-  filepath: data/06_models/regressor.pickle
+  filepath: data/06_models/classifier.pickle
   versioned: true

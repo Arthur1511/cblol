@@ -1,54 +1,48 @@
 import pandas as pd
 
 
-def _is_true(x: pd.Series) -> pd.Series:
-    return x == "t"
-
-
-def _parse_percentage(x: pd.Series) -> pd.Series:
-    x = x.str.replace("%", "")
-    x = x.astype(float) / 100
-    return x
-
-
-def _parse_money(x: pd.Series) -> pd.Series:
-    x = x.str.replace("$", "").str.replace(",", "")
-    x = x.astype(float)
-    return x
-
-
-def preprocess_companies(companies: pd.DataFrame) -> pd.DataFrame:
-    """Preprocesses the data for companies.
+def _remove_na_cols(df: pd.DataFrame) -> pd.DataFrame:
+    """Preprocesses the data for teams.
 
     Args:
-        companies: Raw data.
+        df (pd.DataFrame): raw data
+
     Returns:
-        Preprocessed data, with `company_rating` converted to a float and
-        `iata_approved` converted to boolean.
-    """
-    companies["iata_approved"] = _is_true(companies["iata_approved"])
-    companies["company_rating"] = _parse_percentage(companies["company_rating"])
-    return companies
+        Preprocessed data, without na columns.
+    """   
+    return df.dropna(axis=1, how='all')
 
-
-def preprocess_shuttles(shuttles: pd.DataFrame) -> pd.DataFrame:
-    """Preprocesses the data for shuttles.
+def _to_category(df: pd.DataFrame) -> pd.DataFrame:
+    """Preprocesses the data for teams.
 
     Args:
-        shuttles: Raw data.
+        df (pd.DataFrame): raw data
+
     Returns:
-        Preprocessed data, with `price` converted to a float and `d_check_complete`,
-        `moon_clearance_complete` converted to boolean.
-    """
-    shuttles["d_check_complete"] = _is_true(shuttles["d_check_complete"])
-    shuttles["moon_clearance_complete"] = _is_true(shuttles["moon_clearance_complete"])
-    shuttles["price"] = _parse_money(shuttles["price"])
-    return shuttles
+        Preprocessed data, with column transformed to category.
+    """ 
+    cat_cols = list(df.select_dtypes(include=['object']).columns.append(pd.Index(['teamname', 'patch'])))
+    for c in cat_cols:
+        df[c] = df[c].astype('category')
+
+    
+    return df
+
+def _seconds_to_min(x: pd.Series) -> pd.Series:
+    return (x/60).round(2)
+
+def preprocess_teams(teams: pd.DataFrame) -> pd.DataFrame:
+  
+    teams = _remove_na_cols(teams)
+    teams['gamelength'] = _seconds_to_min(teams['gamelength'])
+    teams = _to_category(teams)
 
 
-def create_model_input_table(
-    shuttles: pd.DataFrame, companies: pd.DataFrame, reviews: pd.DataFrame
-) -> pd.DataFrame:
+    return teams
+
+
+
+def create_model_input_table(teams: pd.DataFrame) -> pd.DataFrame:
     """Combines all data to create a model input table.
 
     Args:
@@ -59,9 +53,4 @@ def create_model_input_table(
         Model input table.
 
     """
-    rated_shuttles = shuttles.merge(reviews, left_on="id", right_on="shuttle_id")
-    model_input_table = rated_shuttles.merge(
-        companies, left_on="company_id", right_on="id"
-    )
-    model_input_table = model_input_table.dropna()
-    return model_input_table
+    return teams.drop(columns=["Unnamed: 0", "gameid"])
